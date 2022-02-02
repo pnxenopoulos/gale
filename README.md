@@ -7,3 +7,5 @@ TODO:
 3) Mapper tests
 4) Vis
 5) README, finish docs
+
+What to do about gudhi?

@@ -1,0 +1,4 @@
+gudhi>=3.4.1.post1
+numpy>=1.19.5
+networkx>=2.6.3
+scikit-learn>=0.24.2
