@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>gale.mapper &mdash; gale 0.0.1 documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> gale
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../faq.html">Frequently Asked Questions (FAQs)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../license.html">License and Acknowledgments</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../mapper.html">Mapper</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">gale</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+      <li>gale.mapper</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for gale.mapper</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">gudhi</span> <span class="k">as</span> <span class="nn">gd</span>
+<span class="kn">import</span> <span class="nn">kmapper</span> <span class="k">as</span> <span class="nn">km</span>
+<span class="kn">import</span> <span class="nn">networkx</span> <span class="k">as</span> <span class="nn">nx</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">sklearn.cluster</span> <span class="kn">import</span> <span class="n">AgglomerativeClustering</span>
+
+
+<div class="viewcode-block" id="create_mapper"><a class="viewcode-back" href="../../mapper.html#gale.mapper.create_mapper">[docs]</a><span class="k">def</span> <span class="nf">create_mapper</span><span class="p">(</span>
+    <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">f</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">resolution</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">gain</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">clusterer</span><span class="o">=</span><span class="n">AgglomerativeClustering</span><span class="p">(</span><span class="n">n_clusters</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">linkage</span><span class="o">=</span><span class="s2">&quot;single&quot;</span><span class="p">),</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Runs Mapper on given some data, a filter function, and resolution + gain parameters.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        X (np.ndarray): Array of data. For GALE, this is the feature attribution output (n x k), where there are n samples with k feature attributions each.</span>
+<span class="sd">        f (np.ndarray): Filter (lens) function. For GALE, the predicted probabilities are the lens function.</span>
+<span class="sd">        resolution (int): Resolution (how wide each window is)</span>
+<span class="sd">        gain (float): Gain (how much overlap between windows)</span>
+<span class="sd">        dist (float): If using AgglomerativeClustering, this sets the distance threshold as (X.max() - X.min())*thresh</span>
+<span class="sd">        clusterer (sklearn.base.ClusterMixin, optional): Clustering method from sklearn. Defaults to AgglomerativeClustering(n_clusters=None, linkage=&quot;single&quot;).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        dict: Dictionary containing the Mapper output</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">mapper</span> <span class="o">=</span> <span class="n">km</span><span class="o">.</span><span class="n">KeplerMapper</span><span class="p">(</span><span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">cover</span> <span class="o">=</span> <span class="n">km</span><span class="o">.</span><span class="n">Cover</span><span class="p">(</span><span class="n">resolution</span><span class="p">,</span> <span class="n">gain</span><span class="p">)</span>
+    <span class="c1"># clusterer.distance_threshold = (X.max() - X.min()) * 0.5</span>
+    <span class="n">graph</span> <span class="o">=</span> <span class="n">mapper</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">lens</span><span class="o">=</span><span class="n">f</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">clusterer</span><span class="o">=</span><span class="n">clusterer</span><span class="p">,</span> <span class="n">cover</span><span class="o">=</span><span class="n">cover</span><span class="p">)</span>
+    <span class="n">graph</span><span class="p">[</span><span class="s2">&quot;node_attr&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">cluster</span> <span class="ow">in</span> <span class="n">graph</span><span class="p">[</span><span class="s2">&quot;nodes&quot;</span><span class="p">]:</span>
+        <span class="n">graph</span><span class="p">[</span><span class="s2">&quot;node_attr&quot;</span><span class="p">][</span><span class="n">cluster</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">f</span><span class="p">[</span><span class="n">graph</span><span class="p">[</span><span class="s2">&quot;nodes&quot;</span><span class="p">][</span><span class="n">cluster</span><span class="p">]])</span>
+    <span class="k">return</span> <span class="n">graph</span></div>
+
+
+<div class="viewcode-block" id="create_pd"><a class="viewcode-back" href="../../mapper.html#gale.mapper.create_pd">[docs]</a><span class="k">def</span> <span class="nf">create_pd</span><span class="p">(</span><span class="n">mapper</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Creates a persistence diagram from Mapper output.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        mapper (dict): Mapper output from `create_mapper`</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        list: List of the topographical features</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">st</span> <span class="o">=</span> <span class="n">gd</span><span class="o">.</span><span class="n">SimplexTree</span><span class="p">()</span>
+    <span class="n">node_idx</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">mapper</span><span class="p">[</span><span class="s2">&quot;nodes&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+        <span class="n">node_idx</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="n">i</span>
+        <span class="n">st</span><span class="o">.</span><span class="n">insert</span><span class="p">([</span><span class="n">i</span><span class="p">])</span>
+    <span class="k">for</span> <span class="n">origin</span> <span class="ow">in</span> <span class="n">mapper</span><span class="p">[</span><span class="s2">&quot;links&quot;</span><span class="p">]:</span>
+        <span class="n">edges</span> <span class="o">=</span> <span class="n">mapper</span><span class="p">[</span><span class="s2">&quot;links&quot;</span><span class="p">][</span><span class="n">origin</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">edges</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">e</span> <span class="o">!=</span> <span class="n">origin</span><span class="p">:</span>
+                <span class="n">st</span><span class="o">.</span><span class="n">insert</span><span class="p">([</span><span class="n">node_idx</span><span class="p">[</span><span class="n">origin</span><span class="p">],</span> <span class="n">node_idx</span><span class="p">[</span><span class="n">e</span><span class="p">]])</span>
+    <span class="n">attrs</span> <span class="o">=</span> <span class="p">{</span><span class="n">node_idx</span><span class="p">[</span><span class="n">k</span><span class="p">]:</span> <span class="n">mapper</span><span class="p">[</span><span class="s2">&quot;node_attr&quot;</span><span class="p">][</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">mapper</span><span class="p">[</span><span class="s2">&quot;nodes&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()}</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">attrs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">st</span><span class="o">.</span><span class="n">assign_filtration</span><span class="p">([</span><span class="n">k</span><span class="p">],</span> <span class="n">v</span><span class="p">)</span>
+    <span class="n">st</span><span class="o">.</span><span class="n">make_filtration_non_decreasing</span><span class="p">()</span>
+    <span class="n">st</span><span class="o">.</span><span class="n">extend_filtration</span><span class="p">()</span>
+    <span class="n">dgms</span> <span class="o">=</span> <span class="n">st</span><span class="o">.</span><span class="n">extended_persistence</span><span class="p">(</span><span class="n">min_persistence</span><span class="o">=</span><span class="mf">1e-5</span><span class="p">)</span>
+    <span class="n">pdgms</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">dgm</span> <span class="ow">in</span> <span class="n">dgms</span><span class="p">:</span>
+        <span class="n">pdgms</span> <span class="o">+=</span> <span class="p">[</span><span class="n">d</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">dgm</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">pdgms</span></div>
+
+
+<div class="viewcode-block" id="bottleneck_distance"><a class="viewcode-back" href="../../mapper.html#gale.mapper.bottleneck_distance">[docs]</a><span class="k">def</span> <span class="nf">bottleneck_distance</span><span class="p">(</span><span class="n">mapper_a</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">mapper_b</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Calculates the bottleneck distance between two Mapper outputs (denoted A and B)</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        mapper_a (dict): Mapper A, from `create_mapper`</span>
+<span class="sd">        mapper_b (dict): Mapper B, from `create_mapper`</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        float: the bottleneck distance</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">pd_a</span> <span class="o">=</span> <span class="n">create_pd</span><span class="p">(</span><span class="n">mapper_a</span><span class="p">)</span>
+    <span class="n">pd_b</span> <span class="o">=</span> <span class="n">create_pd</span><span class="p">(</span><span class="n">mapper_b</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">gd</span><span class="o">.</span><span class="n">bottleneck_distance</span><span class="p">(</span><span class="n">pd_a</span><span class="p">,</span> <span class="n">pd_b</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="bootstrap_mapper_params"><a class="viewcode-back" href="../../mapper.html#gale.mapper.bootstrap_mapper_params">[docs]</a><span class="k">def</span> <span class="nf">bootstrap_mapper_params</span><span class="p">(</span>
+    <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">f</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">resolutions</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span>
+    <span class="n">gains</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span>
+    <span class="n">distances</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span>
+    <span class="n">clusterer</span><span class="o">=</span><span class="n">AgglomerativeClustering</span><span class="p">(</span><span class="n">n_clusters</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">linkage</span><span class="o">=</span><span class="s2">&quot;single&quot;</span><span class="p">),</span>
+    <span class="n">ci</span><span class="o">=</span><span class="mf">0.95</span><span class="p">,</span>
+    <span class="n">n</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Bootstraps the data to figure out the best Mapper parameters through a greedy search.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        X (np.ndarray): Array of data. For GALE, this is the feature attribution output (n x k), where there are n samples with k feature attributions each.</span>
+<span class="sd">        f (np.ndarray): Filter (lens) function. For GALE, the predicted probabilities are the lens function.</span>
+<span class="sd">        resolutions (list): List of resolutions to test.</span>
+<span class="sd">        gains (list): List of gains to test.</span>
+<span class="sd">        distances (list): If using AgglomerativeClustering, this sets the distance threshold as (X.max() - X.min())*thresh.</span>
+<span class="sd">        clusterer (sklearn.base.ClusterMixin, optional): Clustering method from sklearn. Defaults to AgglomerativeClustering(n_clusters=None, linkage=&quot;single&quot;).</span>
+<span class="sd">        ci (float, optional): _description_. Defaults to 0.95.</span>
+<span class="sd">        n (int, optional): _description_. Defaults to 30.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        dict: Dictionary containing the Mapper parameters found in a greedy search</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">bootstrapped_results</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">resolutions</span><span class="p">:</span>
+        <span class="n">bootstrapped_results</span><span class="p">[</span><span class="n">r</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">gains</span><span class="p">:</span>
+            <span class="n">bootstrapped_results</span><span class="p">[</span><span class="n">r</span><span class="p">][</span><span class="n">g</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">distances</span><span class="p">:</span>
+                <span class="n">bootstrapped_results</span><span class="p">[</span><span class="n">r</span><span class="p">][</span><span class="n">g</span><span class="p">][</span><span class="n">d</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="n">clusterer</span><span class="o">.</span><span class="n">distance_threshold</span> <span class="o">=</span> <span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">-</span> <span class="n">X</span><span class="o">.</span><span class="n">min</span><span class="p">())</span> <span class="o">*</span> <span class="n">d</span>
+                <span class="n">M</span> <span class="o">=</span> <span class="n">create_mapper</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">clusterer</span><span class="p">)</span>
+                <span class="n">n_samples</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">distribution</span><span class="p">,</span> <span class="n">cc</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
+                <span class="k">for</span> <span class="n">bootstrap</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+                    <span class="c1"># Randomly select points with replacement</span>
+                    <span class="n">idxs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">n_samples</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">n_samples</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                    <span class="n">Xboot</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="n">idxs</span><span class="p">,</span> <span class="p">:]</span>
+                    <span class="n">fboot</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="n">idxs</span><span class="p">]</span>
+                    <span class="c1"># Fit mapper</span>
+                    <span class="n">M_boot</span> <span class="o">=</span> <span class="n">create_mapper</span><span class="p">(</span><span class="n">Xboot</span><span class="p">,</span> <span class="n">fboot</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">clusterer</span><span class="p">)</span>
+                    <span class="n">G_boot</span> <span class="o">=</span> <span class="n">mapper_to_networkx</span><span class="p">(</span><span class="n">M_boot</span><span class="p">)</span>
+                    <span class="n">G_cc</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">number_connected_components</span><span class="p">(</span><span class="n">G_boot</span><span class="p">)</span>
+                    <span class="n">cc</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">G_cc</span><span class="p">)</span>
+                    <span class="n">distribution</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">bottleneck_distance</span><span class="p">(</span><span class="n">M_boot</span><span class="p">,</span> <span class="n">M</span><span class="p">))</span>
+                <span class="n">distribution</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">distribution</span><span class="p">)</span>
+                <span class="n">dist_thresh</span> <span class="o">=</span> <span class="n">distribution</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">ci</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">distribution</span><span class="p">))]</span>
+                <span class="n">cc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">cc</span><span class="p">)</span>
+                <span class="n">cc_thresh</span> <span class="o">=</span> <span class="n">cc</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">ci</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">cc</span><span class="p">))]</span>
+                <span class="n">bootstrapped_results</span><span class="p">[</span><span class="n">r</span><span class="p">][</span><span class="n">g</span><span class="p">][</span><span class="n">d</span><span class="p">][</span><span class="s2">&quot;stability&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">dist_thresh</span>
+                <span class="n">bootstrapped_results</span><span class="p">[</span><span class="n">r</span><span class="p">][</span><span class="n">g</span><span class="p">][</span><span class="n">d</span><span class="p">][</span><span class="s2">&quot;components&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">cc_thresh</span>
+    <span class="c1"># Find good params</span>
+    <span class="n">best_stability</span> <span class="o">=</span> <span class="mi">999</span>
+    <span class="n">best_components</span> <span class="o">=</span> <span class="mi">999</span>
+    <span class="n">best_r</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">best_g</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">best_d</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">resolutions</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">gains</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">distances</span><span class="p">:</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">bootstrapped_results</span><span class="p">[</span><span class="n">r</span><span class="p">][</span><span class="n">g</span><span class="p">][</span><span class="n">d</span><span class="p">][</span><span class="s2">&quot;stability&quot;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">best_stability</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span>
+                    <span class="n">bootstrapped_results</span><span class="p">[</span><span class="n">r</span><span class="p">][</span><span class="n">g</span><span class="p">][</span><span class="n">d</span><span class="p">][</span><span class="s2">&quot;components&quot;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">best_components</span>
+                <span class="p">):</span>
+                    <span class="n">best_stability</span> <span class="o">=</span> <span class="n">bootstrapped_results</span><span class="p">[</span><span class="n">r</span><span class="p">][</span><span class="n">g</span><span class="p">][</span><span class="n">d</span><span class="p">][</span><span class="s2">&quot;stability&quot;</span><span class="p">]</span>
+                    <span class="n">best_components</span> <span class="o">=</span> <span class="n">bootstrapped_results</span><span class="p">[</span><span class="n">r</span><span class="p">][</span><span class="n">g</span><span class="p">][</span><span class="n">d</span><span class="p">][</span><span class="s2">&quot;components&quot;</span><span class="p">]</span>
+                    <span class="n">best_r</span> <span class="o">=</span> <span class="n">r</span>
+                    <span class="n">best_g</span> <span class="o">=</span> <span class="n">g</span>
+                    <span class="n">best_d</span> <span class="o">=</span> <span class="n">d</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">&quot;stability&quot;</span><span class="p">:</span> <span class="n">best_stability</span><span class="p">,</span>
+        <span class="s2">&quot;components&quot;</span><span class="p">:</span> <span class="n">best_components</span><span class="p">,</span>
+        <span class="s2">&quot;resolution&quot;</span><span class="p">:</span> <span class="n">best_r</span><span class="p">,</span>
+        <span class="s2">&quot;gain&quot;</span><span class="p">:</span> <span class="n">best_g</span><span class="p">,</span>
+        <span class="s2">&quot;distance_threshold&quot;</span><span class="p">:</span> <span class="n">best_d</span><span class="p">,</span>
+    <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="mapper_to_networkx"><a class="viewcode-back" href="../../mapper.html#gale.mapper.mapper_to_networkx">[docs]</a><span class="k">def</span> <span class="nf">mapper_to_networkx</span><span class="p">(</span><span class="n">mapper</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">nx</span><span class="o">.</span><span class="n">classes</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">Graph</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Takes the Mapper output (which is a `dict`) and transforms it to a networkx graph.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        mapper (dict): Mapper output from `create_mapper`</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        nx.classes.graph.Graph: Networkx graph produced by the Mapper output.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">G</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">Graph</span><span class="p">()</span>
+    <span class="n">node_idx</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">mapper</span><span class="p">[</span><span class="s2">&quot;nodes&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+        <span class="n">node_idx</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="o">=</span> <span class="n">i</span>
+        <span class="n">G</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">origin</span> <span class="ow">in</span> <span class="n">mapper</span><span class="p">[</span><span class="s2">&quot;links&quot;</span><span class="p">]:</span>
+        <span class="n">edges</span> <span class="o">=</span> <span class="n">mapper</span><span class="p">[</span><span class="s2">&quot;links&quot;</span><span class="p">][</span><span class="n">origin</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">edges</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">e</span> <span class="o">!=</span> <span class="n">origin</span><span class="p">:</span>
+                <span class="n">G</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span><span class="n">node_idx</span><span class="p">[</span><span class="n">origin</span><span class="p">],</span> <span class="n">node_idx</span><span class="p">[</span><span class="n">e</span><span class="p">])</span>
+    <span class="n">attrs</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">node_idx</span><span class="p">[</span><span class="n">k</span><span class="p">]:</span> <span class="p">{</span><span class="s2">&quot;avg_pred&quot;</span><span class="p">:</span> <span class="n">mapper</span><span class="p">[</span><span class="s2">&quot;node_attr&quot;</span><span class="p">][</span><span class="n">k</span><span class="p">]}</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">mapper</span><span class="p">[</span><span class="s2">&quot;nodes&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+    <span class="p">}</span>
+    <span class="n">nx</span><span class="o">.</span><span class="n">set_node_attributes</span><span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="n">attrs</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">G</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Peter Xenopoulos.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>gale &mdash; gale 0.0.1 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="_static/doctools.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Installation" href="installation.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="#" class="icon icon-home"> gale
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Getting Started</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="faq.html">Frequently Asked Questions (FAQs)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="license.html">License and Acknowledgments</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="mapper.html">Mapper</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="#">gale</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="#" class="icon icon-home"></a> &raquo;</li>
+      <li>gale</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="gale">
+<h1>gale<a class="headerlink" href="#gale" title="Permalink to this heading"></a></h1>
+<p><a class="reference external" href="https://pepy.tech/project/gale-topo"><img alt="Downloads" src="https://static.pepy.tech/personalized-badge/gale-topo?period=total&amp;units=international_system&amp;left_color=grey&amp;right_color=blue&amp;left_text=Downloads" /></a> <a class="reference external" href="https://colab.research.google.com/drive/16JhR2nhm9J-9KtqmuxGsKMIGL_5c_42N?usp=sharing"><img alt="Colab" src="https://colab.research.google.com/assets/colab-badge.svg" /></a> <a class="reference external" href="https://github.com/pnxenopoulos/gale"><img alt="Github" src="https://img.shields.io/badge/github-repo-yellowgreen" /></a> <a class="reference external" href="https://github.com/pnxenopoulos/gale/actions/workflows/build.yml"><img alt="Build" src="https://github.com/pnxenopoulos/gale/actions/workflows/build.yml/badge.svg" /></a> <a class="reference external" href="https://github.com/pnxenopoulos/gale/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/badge/license-MIT-lightgrey" /></a></p>
+<p><cite>gale</cite> provides functions to globally compare local explanations. To install the library, run <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">gale-topo</span></code>.</p>
+<p>Using this library to parse CSGO demos is as easy as the few lines of code shown below. To see what output looks like, check out <span class="xref std std-doc">parser_output</span>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">gale</span> <span class="kn">import</span> <span class="n">create_mapper</span>
+
+<span class="n">create_mapper</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+</pre></div>
+</div>
+<section id="using-gale">
+<h2>Using gale<a class="headerlink" href="#using-gale" title="Permalink to this heading"></a></h2>
+<dl class="simple">
+<dt><a class="reference internal" href="installation.html"><span class="doc">Installation</span></a></dt><dd><p>How to install <cite>gale</cite>.</p>
+</dd>
+<dt><a class="reference internal" href="examples.html"><span class="doc">Examples</span></a></dt><dd><p>Examples code and Jupyter notebooks to help get you started.</p>
+</dd>
+<dt><a class="reference internal" href="faq.html"><span class="doc">Frequently Asked Questions (FAQs)</span></a></dt><dd><p>Need help? Check the FAQs first.</p>
+</dd>
+<dt><a class="reference internal" href="license.html"><span class="doc">License and Acknowledgments</span></a></dt><dd><p>License and acknowledgments.</p>
+</dd>
+</dl>
+</section>
+<section id="gale-modules">
+<h2>gale Modules<a class="headerlink" href="#gale-modules" title="Permalink to this heading"></a></h2>
+<dl class="simple">
+<dt><a class="reference internal" href="mapper.html"><span class="doc">Mapper</span></a></dt><dd><p>Mapper module.</p>
+</dd>
+</dl>
+<div class="toctree-wrapper compound">
+</div>
+<div class="toctree-wrapper compound">
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="installation.html" class="btn btn-neutral float-right" title="Installation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Peter Xenopoulos.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
