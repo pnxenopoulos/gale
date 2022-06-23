@@ -6,7 +6,7 @@ gale
    :target: https://pepy.tech/project/gale-topo
 
 .. |Colab| image:: https://colab.research.google.com/assets/colab-badge.svg
-    :target: https://colab.research.google.com/
+    :target: https://colab.research.google.com/drive/16JhR2nhm9J-9KtqmuxGsKMIGL_5c_42N?usp=sharing
    
 .. |Github| image:: https://img.shields.io/badge/github-repo-yellowgreen
    :target: https://github.com/pnxenopoulos/gale
