@@ -11,6 +11,7 @@ def create_mapper(
     f: np.ndarray,
     resolution: int,
     gain: float,
+    dist_thresh: float,
     clusterer=AgglomerativeClustering(n_clusters=None, linkage="single"),
 ) -> dict:
     """Runs Mapper on given some data, a filter function, and resolution + gain parameters.
@@ -20,7 +21,7 @@ def create_mapper(
         f (np.ndarray): Filter (lens) function. For GALE, the predicted probabilities are the lens function.
         resolution (int): Resolution (how wide each window is)
         gain (float): Gain (how much overlap between windows)
-        dist (float): If using AgglomerativeClustering, this sets the distance threshold as (X.max() - X.min())*thresh
+        dist_thresh (float): If using AgglomerativeClustering, this sets the distance threshold as (X.max() - X.min())*thresh. Ignored if clusterer is not AgglomerativeClustering
         clusterer (sklearn.base.ClusterMixin, optional): Clustering method from sklearn. Defaults to AgglomerativeClustering(n_clusters=None, linkage="single").
 
     Returns:
@@ -28,7 +29,7 @@ def create_mapper(
     """
     mapper = km.KeplerMapper(verbose=0)
     cover = km.Cover(resolution, gain)
-    # clusterer.distance_threshold = (X.max() - X.min()) * 0.5
+    clusterer.distance_threshold = (X.max() - X.min()) * dist_thresh
     graph = mapper.map(lens=f, X=X, clusterer=clusterer, cover=cover)
     graph["node_attr"] = {}
     for cluster in graph["nodes"]:
@@ -114,8 +115,7 @@ def bootstrap_mapper_params(
             bootstrapped_results[r][g] = {}
             for d in distances:
                 bootstrapped_results[r][g][d] = {}
-                clusterer.distance_threshold = (X.max() - X.min()) * d
-                M = create_mapper(X, f, r, g, clusterer)
+                M = create_mapper(X, f, r, g, d, clusterer)
                 n_samples = X.shape[0]
                 distribution, cc = [], []
                 for bootstrap in range(n):
@@ -124,7 +124,7 @@ def bootstrap_mapper_params(
                     Xboot = X[idxs, :]
                     fboot = f[idxs]
                     # Fit mapper
-                    M_boot = create_mapper(Xboot, fboot, r, g, clusterer)
+                    M_boot = create_mapper(Xboot, fboot, r, g, d, clusterer)
                     G_boot = mapper_to_networkx(M_boot)
                     G_cc = nx.number_connected_components(G_boot)
                     cc.append(G_cc)
