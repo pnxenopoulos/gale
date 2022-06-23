@@ -21,13 +21,16 @@ gale
 
 .. _repository: https://github.com/pnxenopoulos/gale
 
-Using this library to parse CSGO demos is as easy as the few lines of code shown below. To see what output looks like, check out :doc:`parser_output`.
+GALE is a Python library used to assess the similarity of local explanations from methods such as LIME, SHAP or generalized additive models (GAMs). To do so, GALE models the relationship between the explanation space and the model predictions as a scalar function. Then, we compute the topological skeleton of this function. This topological skeleton acts as a signature, which we use to compare outputs from different explanation methods. GALE is easy to use and can be deployed in just a few lines of code, as we show below
 
 .. code-block:: python
 
-   from gale import create_mapper
+   from gale import create_mapper, bottleneck_distance
 
-   create_mapper(data)
+   model_one_mapper = create_mapper(explanations_one, predictions_one, resolution=10, gain=0.3, dist_thresh=0.5)
+   model_two_mapper = create_mapper(explanations_two, predictions_two, resolution=10, gain=0.3, dist_thresh=0.5)
+
+   bottleneck_distance(model_one_mapper, model_two_mapper)
 
 
 Using gale
