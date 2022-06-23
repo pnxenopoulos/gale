@@ -1,85 +1,62 @@
 import gudhi as gd
+import kmapper as km
 import networkx as nx
 import numpy as np
 
 from sklearn.cluster import AgglomerativeClustering
-from sklearn_tda import MapperComplex
+
+# from sklearn_tda import MapperComplex
 
 
-
-def generate_mapper(
-    X: np.ndarray, f: np.ndarray, f_bounds: list, resolution: int, gain: float, inp="point cloud", clustering=AgglomerativeClustering(n_clusters=None, linkage="single")
-) -> sklearn_tda.clustering.MapperComplex:
-    """Generate Mapper object.
+def create_mapper(
+    X: np.ndarray,
+    f: np.ndarray,
+    resolution: int,
+    gain: float,
+    clusterer=AgglomerativeClustering(n_clusters=None, linkage="single"),
+) -> dict:
+    """Runs Mapper on given some data, a filter function, and resolution + gain parameters.
 
     Args:
-        X (np.ndarray): Explanations
-        f (np.ndarray): Filter function
-        f_bounds (list): Filter function bounds
-        resolution (int): Resolution
-        gain (float): Gain
-        inp (str, optional): [description]. Defaults to "point cloud".
-        clustering ([type], optional): [description]. Defaults to AgglomerativeClustering(n_clusters=None, linkage="single").
+        X (np.ndarray): Array of data. For GALE, this is the feature attribution output (n x k), where there are n samples with k feature attributions each.
+        f (np.ndarray): Filter (lens) function. For GALE, the predicted probabilities are the lens function.
+        resolution (int): Resolution (how wide each window is)
+        gain (float): Gain (how much overlap between windows)
+        clusterer (sklearn.base.ClusterMixin, optional): Clustering method from sklearn. Defaults to AgglomerativeClustering(n_clusters=None, linkage="single").
+    """
+    mapper = km.KeplerMapper(verbose=0)
+    cover = km.Cover(resolution, gain)
+    # clusterer.distance_threshold = (X.max() - X.min()) * 0.5
+    graph = mapper.map(lens=f, X=X, clusterer=clusterer, cover=cover)
+    graph["node_attr"] = {}
+    for cluster in graph["nodes"]:
+        graph["node_attr"][cluster] = np.mean(f[graph["nodes"][cluster]])
+    return graph
+
+
+def create_pd(mapper: dict) -> list:
+    """Creates a persistence diagram from Mapper output.
+
+    Args:
+        mapper (dict): Mapper output from `create_mapper`
 
     Returns:
-        sklearn_tda.clustering.MapperComplex: Mapper graph
+        list: List of the topographical features
     """
-    clustering.distance_threshold = (X.max() - X.min())*0.5
-    params = {
-        "filters": f, 
-        "filter_bnds": np.array([[0,1]]), 
-        "colors": f, 
-        "resolutions": np.array([resolution]), 
-        "gains": np.array([gain]), 
-        "inp": inp, 
-        "clustering": clustering
-    }
-    M = MapperComplex(**params).fit(X)
-    return M
-
-
-def bottleneck_distance(mapper_a, mapper_b):
-    """Computes the bottleneck distance between two Mapper graphs.
-
-    Args:
-        mapper_a (sklearn_tda.clustering.MapperComplex): Mapper graph
-        mapper_b (sklearn_tda.clustering.MapperComplex): Mapper graph
-
-    Returns:
-        float: A float indicating the bottleneck distance between two Mapper graphs.
-    """
-    pd_a = get_persistence_diagram(mapper_a)
-    pd_b = get_persistence_diagram(mapper_b)
-    return gd.bottleneck_distance(pd_a, pd_b)
-
-
-def mapper_to_nx(mapper, get_attrs=False):
-    """Turn a Mapper graph (as computed by sklearn_tda) into a networkx graph. Taken from https://github.com/MathieuCarriere/statmapper/blob/master/statmapper/statmapper.py
-
-    Args:
-        mapper (sklearn_tda.clustering.MapperComplex): A graph computed by Mapper
-        get_attrs (bool, optional): Use the Mapper attributes or not. Defaults to False.
-    """
-    M = mapper.mapper_
-	G = nx.Graph()
-	for (splx,_) in M.get_skeleton(1):	
-		if len(splx) == 1:	G.add_node(splx[0])
-		if len(splx) == 2:	G.add_edge(splx[0], splx[1])
-	if get_attrs:
-		attrs = {k: {"attr_name": mapper.node_info_[k]["colors"]} for k in G.nodes()}
-		nx.set_node_attributes(G, attrs)
-	return G
-
-def get_persistence_diagram(mapper):
-    """Gets the persistence diagram for a Mapper graph
-
-    Args:
-        mapper (sklearn_tda.clustering.MapperComplex): A graph computed by Mapper
-
-    Returns:
-        list: [description]
-    """
-    st = compute_persistence_diagram(mapper)
+    st = gd.SimplexTree()
+    node_idx = {}
+    for i, n in enumerate(mapper["nodes"].keys()):
+        node_idx[n] = i
+        st.insert([i])
+    for origin in mapper["links"]:
+        edges = mapper["links"][origin]
+        for e in edges:
+            if e != origin:
+                st.insert([node_idx[origin], node_idx[e]])
+    attrs = {node_idx[k]: mapper["node_attr"][k] for k in mapper["nodes"].keys()}
+    for k, v in attrs.items():
+        st.assign_filtration([k], v)
+    st.make_filtration_non_decreasing()
     st.extend_filtration()
     dgms = st.extended_persistence(min_persistence=1e-5)
     pdgms = []
@@ -88,27 +65,122 @@ def get_persistence_diagram(mapper):
     return pdgms
 
 
-def compute_persistence_diagram(mapper):
-    """Computes the persistence diagram. Used for get_persistence_diagram.
+def bottleneck_distance(mapper_a: dict, mapper_b: dict) -> float:
+    """Calculates the bottleneck distance between two Mapper outputs (denoted A and B)
 
     Args:
-        mapper (sklearn_tda.clustering.MapperComplex): A graph computed by Mapper
+        mapper_a (dict): Mapper A, from `create_mapper`
+        mapper_b (dict): Mapper B, from `create_mapper`
 
     Returns:
-        gudhi.SimplexTree: [description]
+        float: the bottleneck distance
+    """
+    pd_a = create_pd(mapper_a)
+    pd_b = create_pd(mapper_b)
+    return gd.bottleneck_distance(pd_a, pd_b)
+
+
+def bootstrap_mapper_params(
+    X: np.ndarray,
+    f: np.ndarray,
+    resolutions: list,
+    gains: list,
+    distances: list,
+    clusterer=AgglomerativeClustering(n_clusters=None, linkage="single"),
+    ci=0.95,
+    n=30,
+) -> dict:
+    """_summary_
+
+    Args:
+        X (np.ndarray): _description_
+        f (np.ndarray): _description_
+        resolutions (list): _description_
+        gains (list): _description_
+        distances (list): _description_
+        clusterer (_type_, optional): _description_. Defaults to AgglomerativeClustering(n_clusters=None, linkage="single").
+        ci (float, optional): _description_. Defaults to 0.95.
+        n (int, optional): _description_. Defaults to 30.
+
+    Returns:
+        dict: _description_
+    """
+    bootstrapped_results = {}
+    for r in resolutions:
+        bootstrapped_results[r] = {}
+        for g in gains:
+            bootstrapped_results[r][g] = {}
+            for d in distances:
+                bootstrapped_results[r][g][d] = {}
+                clusterer.distance_threshold = (X.max() - X.min()) * d
+                M = create_mapper(X, f, r, g, clusterer)
+                n_samples = X.shape[0]
+                distribution, cc = [], []
+                for bootstrap in range(n):
+                    # Randomly select points with replacement
+                    idxs = np.random.choice(n_samples, size=n_samples, replace=True)
+                    Xboot = X[idxs, :]
+                    fboot = f[idxs]
+                    # Fit mapper
+                    M_boot = create_mapper(Xboot, fboot, r, g, clusterer)
+                    G_boot = mapper_to_networkx(M_boot)
+                    G_cc = nx.number_connected_components(G_boot)
+                    cc.append(G_cc)
+                    distribution.append(bottleneck_distance(M_boot, M))
+                distribution = np.sort(distribution)
+                dist_thresh = distribution[int(ci * len(distribution))]
+                cc = np.sort(cc)
+                cc_thresh = cc[int(ci * len(cc))]
+                bootstrapped_results[r][g][d]["stability"] = dist_thresh
+                bootstrapped_results[r][g][d]["components"] = cc_thresh
+    # Find good params
+    best_stability = 999
+    best_components = 999
+    best_r = None
+    best_g = None
+    best_d = None
+    for r in resolutions:
+        for g in gains:
+            for d in distances:
+                if (bootstrapped_results[r][g][d]["stability"] < best_stability) & (
+                    bootstrapped_results[r][g][d]["components"] < best_components
+                ):
+                    best_stability = bootstrapped_results[r][g][d]["stability"]
+                    best_components = bootstrapped_results[r][g][d]["components"]
+                    best_r = r
+                    best_g = g
+                    best_d = d
+    return {
+        "stability": best_stability,
+        "components": best_components,
+        "resolution": best_r,
+        "gain": best_g,
+        "distance_threshold": best_d,
+    }
+
+
+def mapper_to_networkx(mapper: dict) -> nx.classes.graph.Graph:
+    """Takes the Mapper output (which is a `dict`) and transforms it to a networkx graph.
+
+    Args:
+        mapper (dict): Mapper output from `create_mapper`
+
+    Returns:
+        nx.classes.graph.Graph: Networkx graph produced by the Mapper output.
     """
     G = nx.Graph()
-    M = mapper.mapper_
-    st = gd.SimplexTree()
-    for (splx,_) in M.get_skeleton(1):
-        if len(splx) == 1:  G.add_node(splx[0])
-        if len(splx) == 2:  G.add_edge(splx[0], splx[1])
-    attrs = {k: mapper.node_info_[k]["colors"][0] for k in G.nodes()}
-    for n in G.nodes():
-        st.insert([n])
-    for e1,e2 in G.edges():
-        st.insert([e1,e2])
-    for k,v in attrs.items():
-        st.assign_filtration([k],v)
-    st.make_filtration_non_decreasing()
-    return st
+    node_idx = {}
+    for i, n in enumerate(mapper["nodes"].keys()):
+        node_idx[n] = i
+        G.add_node(i)
+    for origin in mapper["links"]:
+        edges = mapper["links"][origin]
+        for e in edges:
+            if e != origin:
+                G.add_edge(node_idx[origin], node_idx[e])
+    attrs = {
+        node_idx[k]: {"avg_pred": mapper["node_attr"][k]}
+        for k in mapper["nodes"].keys()
+    }
+    nx.set_node_attributes(G, attrs)
+    return G
