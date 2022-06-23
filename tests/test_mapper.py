@@ -42,7 +42,7 @@ class TestMapper:
 
     def test_mapper(self):
         """Tests Mapper creation"""
-        self.M = create_mapper(self.explanations, self.preds, 10, 0.3)
+        self.M = create_mapper(self.explanations, self.preds, 10, 0.3, 0.5)
         assert type(self.M) == dict
         assert "nodes" in self.M.keys()
         assert "links" in self.M.keys()
