@@ -66,9 +66,9 @@ class TestMapper:
             self.X, self.preds, [10, 20, 30], [0.2, 0.3, 0.4], [0.2, 0.3, 0.4]
         )
         assert type(self.PARAMS) == dict
-        assert self.PARAMS["resolution"] == 10
-        assert self.PARAMS["gain"] == 0.3
-        assert self.PARAMS["distance_threshold"] == 0.4
+        assert type(self.PARAMS["resolution"]) == int
+        assert type(self.PARAMS["gain"]) == float
+        assert type(self.PARAMS["distance_threshold"]) == float
 
     def test_mapper_to_nx(self):
         """Tests Mapper to networkx conversion"""

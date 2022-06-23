@@ -92,7 +92,6 @@ def bootstrap_mapper_params(
     clusterer=AgglomerativeClustering(n_clusters=None, linkage="single"),
     ci=0.95,
     n=30,
-    random_state=2022,
 ) -> dict:
     """Bootstraps the data to figure out the best Mapper parameters through a greedy search.
 
@@ -105,7 +104,6 @@ def bootstrap_mapper_params(
         clusterer (sklearn.base.ClusterMixin, optional): Clustering method from sklearn. Defaults to AgglomerativeClustering(n_clusters=None, linkage="single").
         ci (float, optional): Confidence interval to create. Defaults to 0.95.
         n (int, optional): Number of bootstraps to run. Defaults to 30.
-        random_sate (int, optional): Random seed.
 
     Returns:
         dict: Dictionary containing the Mapper parameters found in a greedy search
@@ -121,7 +119,6 @@ def bootstrap_mapper_params(
                 n_samples = X.shape[0]
                 distribution, cc = [], []
                 for bootstrap in range(n):
-                    np.random.RandomState.set_state(random_state)
                     # Randomly select points with replacement
                     idxs = np.random.choice(n_samples, size=n_samples, replace=True)
                     Xboot = X[idxs, :]
