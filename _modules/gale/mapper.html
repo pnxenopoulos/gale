@@ -85,6 +85,7 @@
     <span class="n">f</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
     <span class="n">resolution</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">gain</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">dist_thresh</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
     <span class="n">clusterer</span><span class="o">=</span><span class="n">AgglomerativeClustering</span><span class="p">(</span><span class="n">n_clusters</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">linkage</span><span class="o">=</span><span class="s2">&quot;single&quot;</span><span class="p">),</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;Runs Mapper on given some data, a filter function, and resolution + gain parameters.</span>
@@ -94,7 +95,7 @@
 <span class="sd">        f (np.ndarray): Filter (lens) function. For GALE, the predicted probabilities are the lens function.</span>
 <span class="sd">        resolution (int): Resolution (how wide each window is)</span>
 <span class="sd">        gain (float): Gain (how much overlap between windows)</span>
-<span class="sd">        dist (float): If using AgglomerativeClustering, this sets the distance threshold as (X.max() - X.min())*thresh</span>
+<span class="sd">        dist_thresh (float): If using AgglomerativeClustering, this sets the distance threshold as (X.max() - X.min())*thresh. Ignored if clusterer is not AgglomerativeClustering</span>
 <span class="sd">        clusterer (sklearn.base.ClusterMixin, optional): Clustering method from sklearn. Defaults to AgglomerativeClustering(n_clusters=None, linkage=&quot;single&quot;).</span>
 
 <span class="sd">    Returns:</span>
@@ -102,7 +103,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">mapper</span> <span class="o">=</span> <span class="n">km</span><span class="o">.</span><span class="n">KeplerMapper</span><span class="p">(</span><span class="n">verbose</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
     <span class="n">cover</span> <span class="o">=</span> <span class="n">km</span><span class="o">.</span><span class="n">Cover</span><span class="p">(</span><span class="n">resolution</span><span class="p">,</span> <span class="n">gain</span><span class="p">)</span>
-    <span class="c1"># clusterer.distance_threshold = (X.max() - X.min()) * 0.5</span>
+    <span class="n">clusterer</span><span class="o">.</span><span class="n">distance_threshold</span> <span class="o">=</span> <span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">-</span> <span class="n">X</span><span class="o">.</span><span class="n">min</span><span class="p">())</span> <span class="o">*</span> <span class="n">dist_thresh</span>
     <span class="n">graph</span> <span class="o">=</span> <span class="n">mapper</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">lens</span><span class="o">=</span><span class="n">f</span><span class="p">,</span> <span class="n">X</span><span class="o">=</span><span class="n">X</span><span class="p">,</span> <span class="n">clusterer</span><span class="o">=</span><span class="n">clusterer</span><span class="p">,</span> <span class="n">cover</span><span class="o">=</span><span class="n">cover</span><span class="p">)</span>
     <span class="n">graph</span><span class="p">[</span><span class="s2">&quot;node_attr&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="n">cluster</span> <span class="ow">in</span> <span class="n">graph</span><span class="p">[</span><span class="s2">&quot;nodes&quot;</span><span class="p">]:</span>
@@ -188,8 +189,7 @@
             <span class="n">bootstrapped_results</span><span class="p">[</span><span class="n">r</span><span class="p">][</span><span class="n">g</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
             <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">distances</span><span class="p">:</span>
                 <span class="n">bootstrapped_results</span><span class="p">[</span><span class="n">r</span><span class="p">][</span><span class="n">g</span><span class="p">][</span><span class="n">d</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-                <span class="n">clusterer</span><span class="o">.</span><span class="n">distance_threshold</span> <span class="o">=</span> <span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">-</span> <span class="n">X</span><span class="o">.</span><span class="n">min</span><span class="p">())</span> <span class="o">*</span> <span class="n">d</span>
-                <span class="n">M</span> <span class="o">=</span> <span class="n">create_mapper</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">clusterer</span><span class="p">)</span>
+                <span class="n">M</span> <span class="o">=</span> <span class="n">create_mapper</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">clusterer</span><span class="p">)</span>
                 <span class="n">n_samples</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
                 <span class="n">distribution</span><span class="p">,</span> <span class="n">cc</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
                 <span class="k">for</span> <span class="n">bootstrap</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
@@ -198,7 +198,7 @@
                     <span class="n">Xboot</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="n">idxs</span><span class="p">,</span> <span class="p">:]</span>
                     <span class="n">fboot</span> <span class="o">=</span> <span class="n">f</span><span class="p">[</span><span class="n">idxs</span><span class="p">]</span>
                     <span class="c1"># Fit mapper</span>
-                    <span class="n">M_boot</span> <span class="o">=</span> <span class="n">create_mapper</span><span class="p">(</span><span class="n">Xboot</span><span class="p">,</span> <span class="n">fboot</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">clusterer</span><span class="p">)</span>
+                    <span class="n">M_boot</span> <span class="o">=</span> <span class="n">create_mapper</span><span class="p">(</span><span class="n">Xboot</span><span class="p">,</span> <span class="n">fboot</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">clusterer</span><span class="p">)</span>
                     <span class="n">G_boot</span> <span class="o">=</span> <span class="n">mapper_to_networkx</span><span class="p">(</span><span class="n">M_boot</span><span class="p">)</span>
                     <span class="n">G_cc</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">number_connected_components</span><span class="p">(</span><span class="n">G_boot</span><span class="p">)</span>
                     <span class="n">cc</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">G_cc</span><span class="p">)</span>

@@ -36,7 +36,7 @@ Using gale
    How to install `gale`.
 
 :doc:`examples`
-   Examples code and Jupyter notebooks to help get you started.
+   Examples to help get you started with GALE.
 
 :doc:`faq`
    Need help? Check the FAQs first.
