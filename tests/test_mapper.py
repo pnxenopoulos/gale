@@ -39,10 +39,10 @@ class TestMapper:
             lime_exp.append(tmp)
 
         self.explanations = np.array(lime_exp)
+        self.M = create_mapper(self.explanations, self.preds, 10, 0.3, 0.5)
 
     def test_mapper(self):
         """Tests Mapper creation"""
-        self.M = create_mapper(self.explanations, self.preds, 10, 0.3, 0.5)
         assert type(self.M) == dict
         assert "nodes" in self.M.keys()
         assert "links" in self.M.keys()
@@ -67,7 +67,7 @@ class TestMapper:
         )
         assert type(self.PARAMS) == dict
         assert self.PARAMS["resolution"] == 10
-        assert self.PARAMS["gain"] == 0.4
+        assert self.PARAMS["gain"] == 0.2
         assert self.PARAMS["distance_threshold"] == 0.4
 
     def test_mapper_to_nx(self):
