@@ -5,8 +5,6 @@ import numpy as np
 
 from sklearn.cluster import AgglomerativeClustering
 
-# from sklearn_tda import MapperComplex
-
 
 def create_mapper(
     X: np.ndarray,
@@ -22,7 +20,11 @@ def create_mapper(
         f (np.ndarray): Filter (lens) function. For GALE, the predicted probabilities are the lens function.
         resolution (int): Resolution (how wide each window is)
         gain (float): Gain (how much overlap between windows)
+        dist (float): If using AgglomerativeClustering, this sets the distance threshold as (X.max() - X.min())*thresh
         clusterer (sklearn.base.ClusterMixin, optional): Clustering method from sklearn. Defaults to AgglomerativeClustering(n_clusters=None, linkage="single").
+
+    Returns:
+        dict: Dictionary containing the Mapper output
     """
     mapper = km.KeplerMapper(verbose=0)
     cover = km.Cover(resolution, gain)
@@ -90,20 +92,20 @@ def bootstrap_mapper_params(
     ci=0.95,
     n=30,
 ) -> dict:
-    """_summary_
+    """Bootstraps the data to figure out the best Mapper parameters through a greedy search.
 
     Args:
-        X (np.ndarray): _description_
-        f (np.ndarray): _description_
-        resolutions (list): _description_
-        gains (list): _description_
-        distances (list): _description_
-        clusterer (_type_, optional): _description_. Defaults to AgglomerativeClustering(n_clusters=None, linkage="single").
+        X (np.ndarray): Array of data. For GALE, this is the feature attribution output (n x k), where there are n samples with k feature attributions each.
+        f (np.ndarray): Filter (lens) function. For GALE, the predicted probabilities are the lens function.
+        resolutions (list): List of resolutions to test.
+        gains (list): List of gains to test.
+        distances (list): If using AgglomerativeClustering, this sets the distance threshold as (X.max() - X.min())*thresh.
+        clusterer (sklearn.base.ClusterMixin, optional): Clustering method from sklearn. Defaults to AgglomerativeClustering(n_clusters=None, linkage="single").
         ci (float, optional): _description_. Defaults to 0.95.
         n (int, optional): _description_. Defaults to 30.
 
     Returns:
-        dict: _description_
+        dict: Dictionary containing the Mapper parameters found in a greedy search
     """
     bootstrapped_results = {}
     for r in resolutions:
