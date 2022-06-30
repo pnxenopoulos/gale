@@ -6,7 +6,7 @@ GALE is a Python library used to assess the similarity of local explanations fro
 ### Install
 GALE is easy to install and use. Simply run 
 
-```
+```shell
 pip install gale-topo
 ```
 
@@ -15,7 +15,7 @@ and you're good to go!
 ### Usage
 You can measure the similarity between sets of explanations in just a few lines of code, shown below
 
-```
+```python
 from gale import create_mapper, bottleneck_distance
 
 model_one_mapper = create_mapper(explanations_one, predictions_one, resolution=10, gain=0.3, dist_thresh=0.5)
