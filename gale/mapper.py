@@ -1,5 +1,7 @@
 import gudhi as gd
+import itertools
 import kmapper as km
+import multiprocessing
 import networkx as nx
 import numpy as np
 
@@ -92,6 +94,7 @@ def bootstrap_mapper_params(
     clusterer=AgglomerativeClustering(n_clusters=None, linkage="single"),
     ci=0.95,
     n=30,
+    n_jobs=1,
 ) -> dict:
     """Bootstraps the data to figure out the best Mapper parameters through a greedy search.
 
@@ -104,54 +107,59 @@ def bootstrap_mapper_params(
         clusterer (sklearn.base.ClusterMixin, optional): Clustering method from sklearn. Defaults to AgglomerativeClustering(n_clusters=None, linkage="single").
         ci (float, optional): Confidence interval to create. Defaults to 0.95.
         n (int, optional): Number of bootstraps to run. Defaults to 30.
+        n_jobs (int, optional): Number of processes for multiprocessing. Defaults to CPU count. -1 for all cores.
 
     Returns:
         dict: Dictionary containing the Mapper parameters found in a greedy search
     """
-    bootstrapped_results = {}
-    for r in resolutions:
-        bootstrapped_results[r] = {}
-        for g in gains:
-            bootstrapped_results[r][g] = {}
-            for d in distances:
-                bootstrapped_results[r][g][d] = {}
-                M = create_mapper(X, f, r, g, d, clusterer)
-                n_samples = X.shape[0]
-                distribution, cc = [], []
-                for bootstrap in range(n):
-                    # Randomly select points with replacement
-                    idxs = np.random.choice(n_samples, size=n_samples, replace=True)
-                    Xboot = X[idxs, :]
-                    fboot = f[idxs]
-                    # Fit mapper
-                    M_boot = create_mapper(Xboot, fboot, r, g, d, clusterer)
-                    G_boot = mapper_to_networkx(M_boot)
-                    G_cc = nx.number_connected_components(G_boot)
-                    cc.append(G_cc)
-                    distribution.append(bottleneck_distance(M_boot, M))
-                distribution = np.sort(distribution)
-                dist_thresh = distribution[int(ci * len(distribution))]
-                cc = np.sort(cc)
-                cc_thresh = cc[int(ci * len(cc))]
-                bootstrapped_results[r][g][d]["stability"] = dist_thresh
-                bootstrapped_results[r][g][d]["components"] = cc_thresh
+    # Create parameter list
+    paramlist = list(itertools.product(resolutions, gains, distances))
+
+    # Create MP pool
+    if n_jobs < 1:
+        pool = multiprocessing.Pool()
+    else:
+        pool = multiprocessing.Pool(processes=n_jobs)
+
+    # Sub function to run the bootstrap sequence
+    def func(params):
+        M = create_mapper(X, f, params[0], params[1], params[2], clusterer)
+        n_samples = X.shape[0]
+        distribution, cc = [], []
+        for bootstrap in range(n):
+            # Randomly select points with replacement
+            idxs = np.random.choice(n_samples, size=n_samples, replace=True)
+            Xboot = X[idxs, :]
+            fboot = f[idxs]
+            # Fit mapper
+            M_boot = create_mapper(
+                Xboot, fboot, params[0], params[1], params[2], clusterer
+            )
+            G_boot = mapper_to_networkx(M_boot)
+            G_cc = nx.number_connected_components(G_boot)
+            cc.append(G_cc)
+            distribution.append(bottleneck_distance(M_boot, M))
+        distribution = np.sort(distribution)
+        dist_thresh = distribution[int(ci * len(distribution))]
+        cc = np.sort(cc)
+        cc_thresh = cc[int(ci * len(cc))]
+        return params[0], params[1], params[2], dist_thresh, cc_thresh
+
+    results = pool.map(func, paramlist)
+
     # Find good params
     best_stability = 999
     best_components = 999
     best_r = None
     best_g = None
     best_d = None
-    for r in resolutions:
-        for g in gains:
-            for d in distances:
-                if (bootstrapped_results[r][g][d]["stability"] < best_stability) & (
-                    bootstrapped_results[r][g][d]["components"] < best_components
-                ):
-                    best_stability = bootstrapped_results[r][g][d]["stability"]
-                    best_components = bootstrapped_results[r][g][d]["components"]
-                    best_r = r
-                    best_g = g
-                    best_d = d
+    for res in results:
+        if (res[3] < best_stability) & (res[4] < best_components):
+            best_stability = res[3]
+            best_components = res[4]
+            best_r = res[0]
+            best_g = res[1]
+            best_d = res[2]
     return {
         "stability": best_stability,
         "components": best_components,

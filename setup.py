@@ -6,7 +6,7 @@ long_description = (this_directory / "README.md").read_text()
 
 setup(
     name="gale-topo",
-    version="0.0.1",
+    version="0.0.2",
     packages=find_packages(),
     # Project uses reStructuredText, so ensure that the docutils get
     # installed or upgraded on the target machine
@@ -18,9 +18,9 @@ setup(
         "scikit-learn>=0.24.2",
     ],
     # metadata to display on PyPI
-    author="Peter Xenopoulos, Gromit Chan, ",
+    author="Peter Xenopoulos, Gromit Chan, Harish Doraiswamy, Luis Gustavo Nonato, Brian Barr, Claudio Silva",
     author_email="xenopoulos@nyu.edu",
-    description="Globally Assessing Local Explanations (GALE), a method to compare local explaination output",
+    description="Globally Assessing Local Explanations (GALE) is a method to compare local explaination output using topological data analysis",
     keywords="explainability interpretability topology",
     url="https://github.com/pnxenopoulos/gale",
     project_urls={
