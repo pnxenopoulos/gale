@@ -85,6 +85,38 @@ def bottleneck_distance(mapper_a: dict, mapper_b: dict) -> float:
     return gd.bottleneck_distance(pd_a, pd_b)
 
 
+# Sub function to run the bootstrap sequence
+def _bootstrap_sub(params):
+    M = create_mapper(
+        params[0],
+        params[1],
+        params[2],
+        params[3],
+        params[4],
+        params[5],
+        params[6],
+        params[7],
+    )
+    n_samples = params[0].shape[0]
+    distribution, cc = [], []
+    for bootstrap in range(params[7]):
+        # Randomly select points with replacement
+        idxs = np.random.choice(n_samples, size=n_samples, replace=True)
+        Xboot = params[0][idxs, :]
+        fboot = params[1][idxs]
+        # Fit mapper
+        M_boot = create_mapper(Xboot, fboot, params[2], params[3], params[4], params[5])
+        G_boot = mapper_to_networkx(M_boot)
+        G_cc = nx.number_connected_components(G_boot)
+        cc.append(G_cc)
+        distribution.append(bottleneck_distance(M_boot, M))
+    distribution = np.sort(distribution)
+    dist_thresh = distribution[int(params[6] * len(distribution))]
+    cc = np.sort(cc)
+    cc_thresh = cc[int(params[6] * len(cc))]
+    return params[2], params[3], params[4], dist_thresh, cc_thresh
+
+
 def bootstrap_mapper_params(
     X: np.ndarray,
     f: np.ndarray,
@@ -113,7 +145,11 @@ def bootstrap_mapper_params(
         dict: Dictionary containing the Mapper parameters found in a greedy search
     """
     # Create parameter list
-    paramlist = list(itertools.product(resolutions, gains, distances))
+    paramlist = list(
+        itertools.product(
+            [X], [f], resolutions, gains, distances, [clusterer], [ci], [n]
+        )
+    )
 
     # Create MP pool
     if n_jobs < 1:
@@ -121,31 +157,7 @@ def bootstrap_mapper_params(
     else:
         pool = multiprocessing.Pool(processes=n_jobs)
 
-    # Sub function to run the bootstrap sequence
-    def func(params):
-        M = create_mapper(X, f, params[0], params[1], params[2], clusterer)
-        n_samples = X.shape[0]
-        distribution, cc = [], []
-        for bootstrap in range(n):
-            # Randomly select points with replacement
-            idxs = np.random.choice(n_samples, size=n_samples, replace=True)
-            Xboot = X[idxs, :]
-            fboot = f[idxs]
-            # Fit mapper
-            M_boot = create_mapper(
-                Xboot, fboot, params[0], params[1], params[2], clusterer
-            )
-            G_boot = mapper_to_networkx(M_boot)
-            G_cc = nx.number_connected_components(G_boot)
-            cc.append(G_cc)
-            distribution.append(bottleneck_distance(M_boot, M))
-        distribution = np.sort(distribution)
-        dist_thresh = distribution[int(ci * len(distribution))]
-        cc = np.sort(cc)
-        cc_thresh = cc[int(ci * len(cc))]
-        return params[0], params[1], params[2], dist_thresh, cc_thresh
-
-    results = pool.map(func, paramlist)
+    results = pool.map(_bootstrap_sub, paramlist)
 
     # Find good params
     best_stability = 999
