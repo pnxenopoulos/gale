@@ -88,14 +88,12 @@ def bottleneck_distance(mapper_a: dict, mapper_b: dict) -> float:
 # Sub function to run the bootstrap sequence
 def _bootstrap_sub(params):
     M = create_mapper(
-        params[0],
-        params[1],
-        params[2],
-        params[3],
-        params[4],
-        params[5],
-        params[6],
-        params[7],
+        X=params[0],
+        f=params[1],
+        resolution=params[2],
+        gain=params[3],
+        dist_thresh=params[4],
+        clusterer=params[5],
     )
     n_samples = params[0].shape[0]
     distribution, cc = [], []
