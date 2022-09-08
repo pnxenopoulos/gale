@@ -71,7 +71,7 @@ class TestMapper:
         assert type(self.PARAMS["gain"]) == float
         assert type(self.PARAMS["distance_threshold"]) == float
         assert self.PARAMS["resolution"] == 10
-        assert self.PARAMS["gain"] == 0.4
+        assert self.PARAMS["gain"] == 0.2
         assert self.PARAMS["distance_threshold"] == 0.4
 
     def test_mapper_to_nx(self):
