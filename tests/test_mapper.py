@@ -28,7 +28,10 @@ class TestMapper:
 
         lime_exp = []
         explainer = LimeTabularExplainer(
-            self.X, mode="classification", discretize_continuous=False
+            self.X,
+            mode="classification",
+            discretize_continuous=False,
+            random_state=2022,
         )
 
         for i in range(0, self.X.shape[0]):
