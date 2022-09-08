@@ -157,22 +157,46 @@ def bootstrap_mapper_params(
 
     results = pool.map(_bootstrap_sub, paramlist)
 
-    # Find good params
-    best_stability = 999
-    best_components = 999
+    # Find "best" parameters by scaling stability and components between [0,1]
+    # then, calculate the distance to (0,0). Select the params with minimum distance.
+    best_stability = None
+    best_component = None
     best_r = None
     best_g = None
     best_d = None
+
+    # Put stabilities, components, etc. into lists
+    stability, component, resolution, gain, distance = [], [], [], [], []
     for res in results:
-        if (res[3] < best_stability) & (res[4] < best_components):
-            best_stability = res[3]
-            best_components = res[4]
-            best_r = res[0]
-            best_g = res[1]
-            best_d = res[2]
+        stability.append(res[3])
+        component.append(res[4])
+        resolution.append(res[0])
+        gain.append(res[1])
+        distance.append(res[2])
+
+    # Find min/max for stability and components, for scaling purposes
+    min_distance = 999
+    min_stability = min(stability)
+    max_stability = max(stability)
+    min_component = min(component)
+    max_component = max(component)
+
+    # Calculate distance to (0,0) and take the smallest
+    for s, c, r, g, d in zip(stability, component, resolution, gain, distance):
+        stab = (s - min_stability) / (max_stability - min_stability)
+        comp = (c - min_component) / (max_component - min_component)
+        dist = np.sqrt(stab**2 + comp**2)
+        if dist < min_distance:
+            min_distance = dist
+            best_stability = s
+            best_component = c
+            best_r = r
+            best_g = g
+            best_d = d
+
     return {
         "stability": best_stability,
-        "components": best_components,
+        "components": best_component,
         "resolution": best_r,
         "gain": best_g,
         "distance_threshold": best_d,

@@ -65,6 +65,7 @@ class TestMapper:
         self.PARAMS = bootstrap_mapper_params(
             self.X, self.preds, [10, 20, 30], [0.2, 0.3, 0.4], [0.2, 0.3, 0.4]
         )
+        print(self.PARAMS)
         assert type(self.PARAMS) == dict
         assert type(self.PARAMS["resolution"]) == int
         assert type(self.PARAMS["gain"]) == float
